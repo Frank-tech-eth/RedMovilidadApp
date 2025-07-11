@@ -1,4 +1,7 @@
-﻿/* General Resets and Base Styles */
+﻿/* ==================================== */
+/*         BASE & GLOBAL STYLES       */
+/* ==================================== */
+
 body {
     margin: 0;
     padding: 0;
@@ -13,36 +16,53 @@ body {
     min-height: 100vh;
 }
 
-/* Header Styling - Ahora con fondo rojo */
+/* ==================================== */
+/*             HEADER STYLING         */
+/* ==================================== */
+
 .app-header {
-    background-color: #CF152D; /* ROJO de RED */
+    /* Degradado lineal de rojo a un rojo un poco más oscuro */
+    background: linear-gradient(to right, #CF152D, #B21239); /* De tu rojo RED a uno más profundo */
     color: white;
-    padding: 20px 0;
+    padding: 25px 0; /* Más padding para un diseño más espacioso */
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25); /* Sombra más pronunciada */
+    position: sticky; /* Se pega al hacer scroll */
+    top: 0;
+    z-index: 1000;
+    /* Una línea brillante en la parte inferior para énfasis */
+    border-bottom: 3px solid #FFD700; /* Un toque de color (dorado/amarillo) para contraste */
 }
 
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .app-title {
-    font-size: 2.8em;
-    font-weight: 900;
+    font-size: 3em; /* Un poco más grande para destacar */
+    font-weight: 800; /* Negrita intermedia entre 700 y 900 */
     margin: 0;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px; /* Ajuste sutil de espaciado */
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4); /* Sombra de texto para mayor legibilidad */
 }
 
+/* En .app-subtitle */
 .app-subtitle {
-    font-size: 1.1em;
-    font-weight: 300;
-    margin-top: 5px;
-    opacity: 0.9;
+    /* ... otras propiedades ... */
+    animation: fadeInSlideUp 1s ease-out 0.3s forwards; /* Añade 0.3s de retraso */
+    opacity: 0;
 }
 
-/* Main Wrapper for Content */
+/* ==================================== */
+/*           MAIN LAYOUT STYLES       */
+/* ==================================== */
+
 .main-wrapper {
     flex-grow: 1;
     max-width: 1300px;
@@ -53,7 +73,10 @@ body {
     gap: 25px;
 }
 
-/* Card General Styling */
+/* ==================================== */
+/*             CARD STYLING         */
+/* ==================================== */
+
 .card {
     background-color: #ffffff;
     border-radius: 10px;
@@ -61,7 +84,10 @@ body {
     padding: 25px;
 }
 
-/* Search Section Styling */
+/* ==================================== */
+/*         SEARCH SECTION STYLING     */
+/* ==================================== */
+
 .search-section-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -75,7 +101,6 @@ body {
     max-width: 550px;
 }
 
-    /* Títulos de las tarjetas de búsqueda ahora en rojo */
     .search-card h2 {
         color: #CF152D; /* ROJO de RED */
         font-size: 1.6em;
@@ -112,7 +137,10 @@ input[type="text"] {
         box-shadow: 0 0 0 3px rgba(207, 21, 45, 0.2); /* Sombra roja al enfocar */
     }
 
-/* Botones principales ahora en rojo */
+/* ==================================== */
+/*           BUTTON STYLING         */
+/* ==================================== */
+
 .primary-btn {
     padding: 12px 25px;
     background-color: #CF152D; /* ROJO de RED */
@@ -137,7 +165,10 @@ input[type="text"] {
         box-shadow: none;
     }
 
-/* Content Display (Results and Map) */
+/* ==================================== */
+/*     CONTENT DISPLAY (RESULTS & MAP)  */
+/* ==================================== */
+
 .content-display {
     display: flex;
     flex-direction: column;
@@ -152,7 +183,6 @@ input[type="text"] {
     flex-shrink: 0;
 }
 
-    /* Título del panel de resultados ahora en rojo */
     .results-panel h2 {
         color: #CF152D; /* ROJO de RED */
         margin-top: 0;
@@ -175,7 +205,6 @@ input[type="text"] {
         margin: 0;
     }
 
-    /* Fondos de los ítems de lista ahora en un rojo muy claro */
     .results-panel li {
         background-color: #FFE6E6; /* ROJO muy claro, casi rosado pálido */
         padding: 12px 18px;
@@ -185,10 +214,9 @@ input[type="text"] {
         display: flex;
         flex-direction: column;
         gap: 5px;
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
-        /* El texto "Ruta" dentro de los resultados ahora es rojo */
         .results-panel li strong {
             font-size: 1.05em;
             color: #CF152D; /* ROJO de RED */
@@ -207,12 +235,14 @@ input[type="text"] {
         margin-left: 0;
     }
 
-/* Estilo del contenedor del mapa */
 .map-container {
     height: 500px;
 }
 
-/* Mensajes de error/información (se mantienen los colores actuales, que ya son consistentes) */
+/* ==================================== */
+/*     MESSAGES & LOADER STYLING     */
+/* ==================================== */
+
 .error-msg {
     color: #D32F2F;
     font-weight: 500;
@@ -235,7 +265,6 @@ input[type="text"] {
     margin-top: 15px;
 }
 
-/* Estilos de la animación de carga (spinner rojo - ya estaba en rojo) */
 .loader {
     border: 5px solid #f3f3f3;
     border-top: 5px solid #CF152D; /* ROJO de RED */
@@ -257,10 +286,11 @@ input[type="text"] {
     }
 }
 
-/* --- ESTILOS ESPECÍFICOS PARA LOS ÍCONOS DE MAPA --- */
-/* (Asegúrate de que esta sección esté al final de tu CSS para mayor prioridad) */
+/* ==================================== */
+/*       MAP ICONS SPECIFIC STYLES     */
+/* ==================================== */
+/* Asegúrate de que esta sección esté al final de tu CSS para mayor prioridad */
 
-/* Estilo para el marcador de la parada objetivo */
 .target-stop-icon {
     background-color: #CF152D; /* Color del círculo */
     color: white;
@@ -272,58 +302,60 @@ input[type="text"] {
     justify-content: center;
     font-weight: bold;
     border: 3px solid white; /* Borde blanco */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Contenedor principal para el ícono del bus personalizado (el "recuadro" rojo) */
 .custom-bus-icon {
-    position: relative; /* Necesario para posicionar el texto e imagen dentro */
-    width: 45px; /* Ancho del ícono del bus */
-    height: 25px; /* Alto del ícono del bus */
-    background-color: #CF152D; /* Color de fondo ROJO, similar al de la aplicación */
-    border-radius: 5px; /* Bordes ligeramente redondeados */
-    display: flex; /* Para centrar el contenido */
-    align-items: center; /* Centrar verticalmente */
-    justify-content: center; /* Centrar horizontalmente */
-    overflow: hidden; /* Asegura que la imagen y el texto no se salgan del recuadro */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Sombra suave para darle un aspecto 3D */
-    border: 1px solid rgba(255, 255, 255, 0.5); /* Borde blanco sutil para el bus */
+    position: relative;
+    width: 45px;
+    height: 25px;
+    background-color: #CF152D;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-    /* Estilo para la imagen del bus dentro del recuadro */
     .custom-bus-icon .bus-image {
-        width: 70%; /* La imagen ocupará el 70% del ancho del recuadro */
-        height: 70%; /* La imagen ocupará el 70% del alto del recuadro */
-        background-image: url('bus_icon_base.png'); /* ¡Aquí se enlaza a tu archivo PNG descargado! */
-        background-size: contain; /* La imagen se ajustará sin cortarse */
-        background-repeat: no-repeat; /* No queremos que la imagen se repita */
-        background-position: center; /* Centra la imagen dentro de su espacio */
-        /* FILTROS CSS para "colorear" la imagen PNG negra a algo que contraste. */
-        /* Este filtro intenta convertir el negro a blanco/gris claro. */
-        /* Si el ícono original tiene otros colores además de negro y transparente, este filtro puede dar resultados inesperados. */
-        filter: brightness(0) invert(1) opacity(0.8); /* Invierte el color (negro a blanco) y ajusta opacidad */
+        width: 70%;
+        height: 70%;
+        background-image: url('bus_icon_base.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        filter: brightness(0) invert(1) opacity(0.8);
     }
 
-    /* Estilo para el texto del número de ruta (ej. F03) */
     .custom-bus-icon .route-text {
-        position: absolute; /* Para posicionar el texto de forma precisa dentro del recuadro */
-        color: white; /* Color blanco para el texto */
-        font-size: 11px; /* Tamaño de la fuente, ajusta si es necesario */
-        font-weight: bold; /* Texto en negrita */
-        text-shadow: 0px 0px 2px rgba(0,0,0,0.7); /* Sombra para el texto para que resalte */
-        line-height: 1; /* Altura de línea compacta */
-        z-index: 2; /* Asegura que el texto esté por encima de la imagen */
-        /* Posicionamiento para centrar el texto */
+        position: absolute;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
+        line-height: 1;
+        z-index: 2;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%); /* Centra el texto perfectamente */
+        transform: translate(-50%, -50%);
     }
 
+/* ==================================== */
+/*         MEDIA QUERIES (RESPONSIVENESS)     */
+/* ==================================== */
 
-/* Media Queries for Responsiveness (sin cambios de color, solo layout) */
 @media (min-width: 768px) {
     .app-title {
-        font-size: 3.5em;
+        font-size: 3em;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+        /* --- PROPIEDADES DE ANIMACIÓN AGREGADAS --- */
+        animation: fadeInSlideUp 1s ease-out forwards; /* Nombre, duración, función de tiempo, fill-mode */
+        opacity: 0; /* Asegura que no sea visible al inicio antes de la animación */
     }
 
     .app-subtitle {
@@ -383,7 +415,8 @@ input[type="text"] {
         font-size: 1.4em;
     }
 
-    input[type="text"], .primary-btn {
+    input[type="text"],
+    .primary-btn {
         font-size: 0.9em;
         padding: 10px 15px;
     }
@@ -395,5 +428,22 @@ input[type="text"] {
 
     .map-container {
         height: 350px;
+    }
+}
+
+
+/* ==================================== */
+/*               ANIMATIONS             */
+/* ==================================== */
+
+@keyframes fadeInSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px); /* Inicia 20px abajo */
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0); /* Termina en su posición normal */
     }
 }
