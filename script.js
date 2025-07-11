@@ -1,65 +1,78 @@
+// --- CONSTANTES Y ELEMENTOS DEL DOM ---
 const codigoParadaInput = document.getElementById('codigoParadaInput');
 const buscarBtn = document.getElementById('buscarBtn');
 const resultadosDiv = document.getElementById('resultados');
-
-// NUEVAS CONSTANTES para el recorrido
 const codigoRecorridoInput = document.getElementById('codigoRecorridoInput');
 const buscarRecorridoBtn = document.getElementById('buscarRecorridoBtn');
+const loader = document.getElementById('loader');
 
-
+// --- URLs de las APIs (Ambas corregidas y presentes) ---
+// API para buscar próximas llegadas en una parada (proxy para evitar CORS)
 const externalApiBaseUrl = 'https://red-api.chewy.workers.dev/stops';
-const recorridoApiBaseUrl = 'https://red.cl/restservice_v2/rest/conocerecorrido'; // Nueva API
+// API para conocer el recorrido completo de una ruta y sus paraderos
+const recorridoApiBaseUrl = 'https://red.cl/restservice_v2/rest/conocerecorrido';
 
-let map = L.map('map').setView([-33.4489, -70.6693], 12);
+
+// --- CONFIGURACIÓN DEL MAPA LEAFLET ---
+let map = L.map('map').setView([-33.4489, -70.6693], 12); // Centro inicial en Santiago
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
 let paradaMarker = null; // Para el marcador de parada individual
-let routeMarkersGroup = L.featureGroup().addTo(map); // Grupo para marcadores de recorrido y polilínea
+// Grupo para manejar fácilmente los marcadores y polilíneas del recorrido
+let routeMarkersGroup = L.featureGroup().addTo(map);
 
+
+// --- FUNCIONES DE UTILIDAD ---
+
+// Función para limpiar la interfaz de usuario (resultados, marcadores, loader)
 function limpiarUI() {
-    // Limpia el marcador de parada individual
+    // Limpia el marcador de parada individual si existe
     if (paradaMarker) {
         map.removeLayer(paradaMarker);
         paradaMarker = null;
     }
-    // Limpia todos los marcadores y polilíneas del recorrido
+    // Limpia todos los marcadores y polilíneas del grupo de recorrido
     routeMarkersGroup.clearLayers();
-    resultadosDiv.innerHTML = '';
+    resultadosDiv.innerHTML = ''; // Limpia el panel de resultados
+    loader.style.display = 'none'; // Oculta el loader
 }
 
-// Lógica para buscar paradas individuales (EXISTENTE)
+// --- EVENT LISTENERS (LÓGICA DE BÚSQUEDA) ---
+
+// Event listener para el botón de buscar paradas individuales
 buscarBtn.addEventListener('click', async () => {
     const codigoParada = codigoParadaInput.value.trim().toUpperCase();
     console.log(`[DEBUG] Código de parada ingresado: "${codigoParada}"`);
 
     if (!codigoParada) {
         resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un código de parada (ej. PF1126).</p>';
-        limpiarUI();
+        limpiarUI(); // Limpia la UI y oculta el loader
         return;
     }
 
     resultadosDiv.innerHTML = '<p>Cargando información del paradero...</p>';
-    limpiarUI(); // Limpia la UI antes de una nueva búsqueda
+    loader.style.display = 'block'; // Muestra el loader de carga
 
     try {
+        // Construye la URL para la API de paradas individuales
         const fullApiUrl = `${externalApiBaseUrl}/${codigoParada}/next_arrivals`;
-        console.log(`[DEBUG] Llamando a la URL de la API: "${fullApiUrl}"`);
+        console.log(`[DEBUG] Llamando a la URL de la API de paradas: "${fullApiUrl}"`);
 
         const response = await fetch(fullApiUrl);
 
-        console.log(`[DEBUG] Respuesta de la API - Status: ${response.status} (${response.statusText})`);
+        console.log(`[DEBUG] Respuesta de la API de paradas - Status: ${response.status} (${response.statusText})`);
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error(`[DEBUG] Error detallado de la API: ${errorData}`);
-            throw new Error(`Error de la API externa: ${response.status} - ${errorData}`);
+            console.error(`[DEBUG] Error detallado de la API de paradas: ${errorData}`);
+            throw new Error(`Error de la API externa para paradas: ${response.status} - ${errorData}`);
         }
 
         const apiResponseData = await response.json();
-        console.log("[DEBUG] Datos de la API recibidos (objeto JavaScript):", apiResponseData);
+        console.log("[DEBUG] Datos de la API de paradas recibidos:", apiResponseData);
 
         const services = apiResponseData.results;
 
@@ -85,33 +98,36 @@ buscarBtn.addEventListener('click', async () => {
             });
             htmlResultados += '</ul>';
         } else {
-            htmlResultados += '<p>No hay buses cercanos para este paradero en este momento.</p>';
+            htmlResultados += '<p class="info-msg">No hay buses cercanos para este paradero en este momento.</p>';
         }
         resultadosDiv.innerHTML = htmlResultados;
 
-        console.warn("[DEBUG] La API de llegadas no proporciona coordenadas de latitud/longitud del paradero. El mapa no se centrará automáticamente.");
+        console.warn("[DEBUG] La API de llegadas no proporciona coordenadas de latitud/longitud del paradero. El mapa no se centrará automáticamente en la parada.");
 
     } catch (error) {
-        console.error('Error en la aplicación:', error);
-        resultadosDiv.innerHTML = `<p class="error-msg">Ocurrió un error: ${error.message}. Verifica la consola del navegador para más detalles.</p>`;
+        console.error('Error al buscar paradero:', error);
+        resultadosDiv.innerHTML = `<p class="error-msg">Ocurrió un error al buscar el paradero: ${error.message}. Verifica la consola del navegador para más detalles.</p>`;
+    } finally {
+        loader.style.display = 'none'; // Oculta el loader al finalizar (éxito o error)
     }
 });
 
-// NUEVA Lógica para buscar recorridos y dibujar en el mapa
+// Event listener para el botón de buscar recorridos
 buscarRecorridoBtn.addEventListener('click', async () => {
     const codigoRecorrido = codigoRecorridoInput.value.trim().toUpperCase();
     console.log(`[DEBUG] Código de recorrido ingresado: "${codigoRecorrido}"`);
 
     if (!codigoRecorrido) {
         resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un código de recorrido (ej. F03).</p>';
-        limpiarUI();
+        limpiarUI(); // Limpia la UI y oculta el loader
         return;
     }
 
     resultadosDiv.innerHTML = '<p>Cargando información del recorrido y paraderos...</p>';
-    limpiarUI(); // Limpia la UI antes de una nueva búsqueda
+    loader.style.display = 'block'; // Muestra el loader de carga
 
     try {
+        // Construye la URL para la API de recorridos
         const fullApiUrl = `${recorridoApiBaseUrl}?codsint=${codigoRecorrido}`;
         console.log(`[DEBUG] Llamando a la API de recorrido: "${fullApiUrl}"`);
 
@@ -150,12 +166,11 @@ buscarRecorridoBtn.addEventListener('click', async () => {
             const paradaNombre = paradero.name;
             const paradaCodigo = paradero.cod;
 
-            // Crea un marcador y lo añade al grupo
+            // Crea un marcador y lo añade al grupo de marcadores del recorrido
             const marker = L.marker([lat, lng]).bindPopup(`<strong>${paradaCodigo}</strong><br>${paradaNombre}`);
             routeMarkersGroup.addLayer(marker);
 
             bounds.push([lat, lng]); // Añade las coordenadas para calcular los límites del mapa
-
             htmlResultados += `<li><strong>${paradaCodigo}</strong>: ${paradaNombre}</li>`;
         });
         htmlResultados += '</ul>';
@@ -167,7 +182,7 @@ buscarRecorridoBtn.addEventListener('click', async () => {
             const polyline = L.polyline(pathCoordinates, { color: routeColor, weight: 5, opacity: 0.7 }).addTo(map);
             routeMarkersGroup.addLayer(polyline); // Añade la polilínea al mismo grupo para limpieza fácil
 
-            // Extiende los límites para incluir también la polilínea
+            // Extiende los límites para incluir también la polilínea (si no está ya cubierta por los paraderos)
             polyline.getLatLngs().forEach(latlng => bounds.push([latlng.lat, latlng.lng]));
         }
 
@@ -179,5 +194,7 @@ buscarRecorridoBtn.addEventListener('click', async () => {
     } catch (error) {
         console.error('Error al buscar recorrido:', error);
         resultadosDiv.innerHTML = `<p class="error-msg">Ocurrió un error al buscar el recorrido: ${error.message}. Verifica la consola del navegador para más detalles.</p>`;
+    } finally {
+        loader.style.display = 'none'; // Oculta el loader al finalizar (éxito o error)
     }
 });

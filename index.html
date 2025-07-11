@@ -3,30 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor de Micros RED Santiago</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>RED Movilidad - Monitoreo de Recorridos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Monitor de Micros <span class="red-branding">RED</span></h1>
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">RED Movilidad</h1>
+            <p class="app-subtitle">Tu guía en el transporte público de Santiago</p>
+        </div>
+    </header>
 
-        <div class="search-section">
-            <input type="text" id="codigoParadaInput" placeholder="Ej: PF1126, PA1">
-            <button id="buscarBtn">Buscar Parada</button>
+    <div class="main-wrapper">
+        <div class="search-section-wrapper">
+            <div class="search-card card">
+                <h2>Buscar Parada</h2>
+                <div class="input-group">
+                    <input type="text" id="codigoParadaInput" placeholder="Ej: PF1126, PA1">
+                    <button id="buscarBtn" class="primary-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="search-card card">
+                <h2>Ver Recorrido</h2>
+                <div class="input-group">
+                    <input type="text" id="codigoRecorridoInput" placeholder="Ej: F03, 210">
+                    <button id="buscarRecorridoBtn" class="primary-btn">Ver Recorrido</button>
+                </div>
+            </div>
         </div>
 
-        <div class="search-section">
-            <input type="text" id="codigoRecorridoInput" placeholder="Ej: F03, 210">
-            <button id="buscarRecorridoBtn">Ver Recorrido</button>
-        </div>
+        <div id="loader" class="loader"></div>
 
-        <div id="resultados" class="results-panel">
-            <p>Ingresa un código de parada o de recorrido y haz clic en buscar.</p>
+        <div class="content-display">
+            <div id="resultados" class="results-panel card">
+                <p class="info-msg">Ingresa un código de parada o de recorrido para ver la información.</p>
+            </div>
+            <div id="map" class="map-container card"></div>
         </div>
-
-        <div id="map" class="map-container"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
