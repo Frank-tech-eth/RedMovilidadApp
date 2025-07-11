@@ -1,73 +1,119 @@
-﻿body {
-    font-family: Arial, sans-serif;
+﻿/* Variables CSS para colores - ¡Fácil de cambiar! */
+:root {
+    --color-primary: #004A8F; /* Azul oscuro/marino RED */
+    --color-secondary: #E30613; /* Rojo de acento RED */
+    --color-text-dark: #333;
+    --color-text-light: #fff;
+    --color-background-light: #f4f4f4;
+    --color-background-card: #fff;
+    --color-border: #ddd;
+    --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Roboto', 'Arial', sans-serif; /* Usamos Roboto si está disponible, sino Arial */
     margin: 0;
     padding: 20px;
-    background-color: #f4f4f4;
+    background-color: var(--color-background-light);
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 100vh; /* Asegura que el body ocupe toda la altura de la vista */
+    color: var(--color-text-dark);
 }
 
 .container {
-    width: 90%;
-    max-width: 1000px;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 95%; /* Un poco más ancho */
+    max-width: 900px; /* Reducimos un poco el max-width para centrar mejor */
+    background-color: var(--color-background-card);
+    padding: 30px; /* Más padding */
+    border-radius: 12px; /* Bordes más redondeados */
+    box-shadow: 0 4px 20px var(--color-shadow); /* Sombra más pronunciada */
     margin-bottom: 20px;
+    box-sizing: border-box; /* Incluye padding y border en el ancho/alto total */
 }
 
 h1 {
     text-align: center;
-    color: #333;
-    margin-bottom: 20px;
+    color: var(--color-primary); /* Título principal en azul RED */
+    margin-bottom: 25px; /* Más espacio debajo */
+    font-size: 2.2em; /* Tamaño de fuente más grande */
+    font-weight: bold;
+    letter-spacing: -0.5px; /* Ligeramente más apretado */
 }
 
 .search-section {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    flex-wrap: wrap; /* Permite que los elementos salten de línea en pantallas pequeñas */
+    gap: 15px; /* Más espacio entre elementos */
+    margin-bottom: 30px;
     justify-content: center;
+    align-items: center; /* Alinea verticalmente */
 }
 
 input[type="text"] {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 12px 15px; /* Más padding */
+    border: 1px solid var(--color-border);
+    border-radius: 8px; /* Bordes más redondeados */
     flex-grow: 1;
-    max-width: 250px;
-    font-size: 1em;
+    max-width: 300px; /* Aumentamos el max-width para el input */
+    font-size: 1.1em; /* Fuente más grande */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+    input[type="text"]:focus {
+        border-color: var(--color-primary); /* Borde azul al enfocar */
+        box-shadow: 0 0 0 3px rgba(0, 74, 143, 0.2); /* Sombra suave al enfocar */
+        outline: none; /* Elimina el borde de enfoque por defecto del navegador */
+    }
+
 button {
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
+    padding: 12px 25px; /* Más padding */
+    background-color: var(--color-primary); /* Botón en azul RED */
+    color: var(--color-text-light);
     border: none;
-    border-radius: 4px;
+    border-radius: 8px; /* Bordes más redondeados */
     cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s ease;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    min-width: 120px; /* Ancho mínimo para consistencia */
 }
 
     button:hover {
-        background-color: #0056b3;
+        background-color: #003F7A; /* Azul más oscuro al pasar el ratón */
+        transform: translateY(-2px); /* Pequeño efecto de levantamiento */
+    }
+
+    button:active {
+        transform: translateY(0); /* Vuelve a la posición normal al hacer clic */
     }
 
 .results-panel {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    min-height: 80px;
+    margin-bottom: 25px; /* Más espacio debajo */
+    padding: 20px; /* Más padding */
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background-color: #fcfcfc; /* Un blanco muy suave */
+    min-height: 120px; /* Un poco más de altura mínima */
     overflow-y: auto;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Sombra interna sutil */
 }
 
-    .results-panel h2, .results-panel h3 {
+    .results-panel h2 {
         margin-top: 0;
-        color: #555;
+        color: var(--color-primary); /* Título del paradero en azul */
+        font-size: 1.8em;
+        border-bottom: 2px solid var(--color-border); /* Línea divisoria */
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+
+    .results-panel h3 {
+        color: var(--color-text-dark);
+        font-size: 1.3em;
+        margin-top: 20px;
+        margin-bottom: 10px;
     }
 
     .results-panel ul {
@@ -76,26 +122,73 @@ button {
     }
 
     .results-panel li {
-        padding: 8px 0;
-        border-bottom: 1px dashed #ddd;
-        font-size: 0.95em;
-        color: #444;
+        padding: 12px 0; /* Más padding */
+        border-bottom: 1px solid #eee; /* Borde más suave */
+        font-size: 1.05em; /* Fuente ligeramente más grande */
+        color: var(--color-text-dark);
+        display: flex; /* Para mejor alineación de elementos */
+        justify-content: space-between; /* Espacio entre ruta y tiempo */
+        align-items: center;
     }
 
         .results-panel li:last-child {
             border-bottom: none;
         }
 
+        .results-panel li strong {
+            color: var(--color-primary); /* La ruta en azul */
+            font-weight: bold;
+        }
+
+        .results-panel li span {
+            font-weight: 600; /* Texto del tiempo más prominente */
+            color: var(--color-secondary); /* Color de acento para el tiempo */
+        }
+
 .error-msg {
-    color: #d9534f;
+    color: var(--color-secondary); /* Rojo de acento para errores */
     font-weight: bold;
     text-align: center;
+    padding: 15px;
+    background-color: #ffe6e6; /* Fondo rojo claro */
+    border-radius: 8px;
+    border: 1px solid var(--color-secondary);
 }
 
 .map-container {
-    height: 500px;
+    height: 450px; /* Altura del mapa ligeramente menor */
     width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #e0e0e0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 10px var(--color-shadow); /* Sombra para el mapa */
+    overflow: hidden; /* Asegura que los bordes redondeados se apliquen bien */
+}
+
+/* Responsividad básica */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        width: 100%; /* Ocupa todo el ancho en pantallas pequeñas */
+        border-radius: 0; /* Sin bordes redondeados en los extremos */
+        box-shadow: none; /* Sin sombra en móvil para diseño más fluido */
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .search-section {
+        flex-direction: column; /* Apila el input y el botón */
+    }
+
+    input[type="text"],
+    button {
+        max-width: 100%; /* Ocupan todo el ancho disponible */
+        width: 100%;
+    }
+
+    .results-panel li {
+        flex-direction: column; /* Apila ruta y tiempo en mobile */
+        align-items: flex-start;
+    }
 }

@@ -4,19 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor de Micros RED Santiago</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
 <body>
     <div class="container">
-        <h1>Monitor de Micros RED</h1>
+        <h1>Monitor de Micros <span class="red-branding">RED</span></h1>
+
         <div class="search-section">
             <input type="text" id="codigoParadaInput" placeholder="Ej: PF1126, PA1">
             <button id="buscarBtn">Buscar Parada</button>
         </div>
 
+        <div class="search-section">
+            <input type="text" id="codigoRecorridoInput" placeholder="Ej: F03, 210">
+            <button id="buscarRecorridoBtn">Ver Recorrido</button>
+        </div>
+
         <div id="resultados" class="results-panel">
-            <p>Ingresa un código de parada y haz clic en "Buscar Parada".</p>
+            <p>Ingresa un código de parada o de recorrido y haz clic en buscar.</p>
         </div>
 
         <div id="map" class="map-container"></div>
