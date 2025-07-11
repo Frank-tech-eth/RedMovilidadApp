@@ -55,53 +55,88 @@ function limpiarUI() {
 }
 
 
-// --- New function to update the bus marker's position and info ---
-async function updateBusPosition() {
-    if (!activeStopCode || !activeRouteId || !activeBusPlate) {
-        console.warn("No bus is actively being tracked for updates.");
-        return;
+/**
+ * Calcula una posición en una polilínea a una distancia específica, retrocediendo desde un punto objetivo.
+ * Esta es una aproximación para fines de simulación visual.
+ *
+ * @param {Array<Array<number>>} polylineCoords - Un array de arrays [lat, lng] que representan los puntos de la polilínea.
+ * @param {L.LatLng} targetLatLng - El objeto L.LatLng de la parada objetivo.
+ * @param {number} distanceInMeters - La distancia en metros para retroceder desde el punto objetivo en la polilínea.
+ * @returns {L.LatLng|null} Un objeto L.LatLng con la posición estimada del bus, o null si no se puede calcular.
+ */
+function getLatLngAtDistanceAlongPolyline(polylineCoords, targetLatLng, distanceInMeters) {
+    const latlngs = polylineCoords.map(coord => L.latLng(coord[0], coord[1]));
+    if (latlngs.length < 2) return null;
+
+    let closestPointOnPolyline = null;
+    let closestPointIndex = -1;
+    let minDistanceToSegment = Infinity;
+
+    // Encuentra el punto más cercano en cualquier segmento de la polilínea a la parada objetivo.
+    // Esto es una aproximación para evitar librerías complejas.
+    for (let i = 0; i < latlngs.length - 1; i++) {
+        const p1 = latlngs[i];
+        const p2 = latlngs[i + 1];
+        // Calcular la distancia desde targetLatLng al segmento p1-p2.
+        // Leaflet no tiene esto directo, así que usamos un punto medio aproximado
+        // o simplemente tomamos los vértices como referencia.
+        // Para simplificar, nos quedaremos con el vértice más cercano de la polilínea.
+        // Una implementación completa de "proyectar punto en segmento" es compleja sin librerías.
+
+        // Versión simplificada: Encontrar el vértice más cercano de la polilínea a la parada.
+        // Esto ya lo hace el código anterior, lo reafirmo para claridad.
+        const distToP1 = targetLatLng.distanceTo(p1);
+        if (distToP1 < minDistanceToSegment) {
+            minDistanceToSegment = distToP1;
+            closestPointOnPolyline = p1;
+            closestPointIndex = i;
+        }
+        const distToP2 = targetLatLng.distanceTo(p2);
+        if (distToP2 < minDistanceToSegment) {
+            minDistanceToSegment = distToP2;
+            closestPointOnPolyline = p2;
+            closestPointIndex = i + 1;
+        }
     }
 
-    console.log(`[DEBUG] Actualizando posición para bus ${activeBusPlate} en ruta ${activeRouteId} para parada ${activeStopCode}`);
+    if (closestPointOnPolyline === null || closestPointIndex === -1) {
+        console.warn("No se encontró un punto de referencia en la polilínea para la parada objetivo.");
+        return null;
+    }
 
-    try {
-        const fullApiUrl = `${externalApiBaseUrl}/${activeStopCode}/next_arrivals`;
-        const response = await fetch(fullApiUrl);
-        if (!response.ok) {
-            throw new Error(`Error al re-fetch de llegadas para ${activeStopCode}: ${response.status}`);
-        }
-        const apiResponseData = await response.json();
-        const services = apiResponseData.results;
+    let currentDistanceCovered = 0;
+    let lastPoint = latlngs[closestPointIndex]; // Empezar desde el punto de la polilínea más cercano a la parada
 
-        let foundBus = null;
-        if (services && Array.isArray(services)) {
-            foundBus = services.find(s => s.route_id === activeRouteId && s.bus_plate_number === activeBusPlate);
-        }
+    // Recorrer la polilínea hacia atrás desde el punto más cercano a la parada.
+    for (let i = closestPointIndex - 1; i >= 0; i--) {
+        const nextPoint = latlngs[i];
+        const segmentLength = lastPoint.distanceTo(nextPoint);
 
-        if (foundBus) {
-            const tiempoEstimado = foundBus.arrival_estimation;
-            const distanciaMetros = foundBus.bus_distance;
+        if (currentDistanceCovered + segmentLength >= distanceInMeters) {
+            // El punto estimado del bus está dentro de este segmento
+            const remainingDistanceInSegment = distanceInMeters - currentDistanceCovered;
+            // Calcular la proporción a lo largo del segmento
+            // Queremos ir 'remainingDistanceInSegment' desde 'lastPoint' hacia 'nextPoint'
+            const ratio = remainingDistanceInSegment / segmentLength;
 
-            if (currentBusMarker) {
-                currentBusMarker.setPopupContent(`
-                    <strong>Bus: ${activeBusPlate} (Ruta: ${activeRouteId})</strong><br>
-                    Llega en: <span style="font-weight: bold; color: #CF152D;">${tiempoEstimado}</span><br>
-                    Distancia: ${distanciaMetros} mts
-                `).openPopup();
-            }
+            const lat = lastPoint.lat + (nextPoint.lat - lastPoint.lat) * ratio;
+            const lng = lastPoint.lng + (nextPoint.lng - lastPoint.lng) * ratio;
+            return L.latLng(lat, lng);
         } else {
-            console.warn(`Bus ${activeBusPlate} (Ruta ${activeRouteId}) ya no se encontró en la lista de próximas llegadas para ${activeStopCode}.`);
+            currentDistanceCovered += segmentLength;
+            lastPoint = nextPoint;
         }
-
-    } catch (error) {
-        console.error("Error al actualizar la posición del bus:", error);
     }
+
+    // Si la distancia es mayor que la longitud de la polilínea desde el inicio hasta la parada,
+    // o si el bus está en el inicio del recorrido, devolver el primer punto.
+    return latlngs[0];
 }
 
 
 // Function to display a specific bus's route and initial "position"
 async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialBusDistance, initialArrivalEstimation) {
-    limpiarUI();
+    limpiarUI(); // Limpia todo lo anterior, incluyendo el intervalo
 
     activeStopCode = originalStopCode;
     activeRouteId = routeId;
@@ -125,12 +160,14 @@ async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialB
         const routeColor = apiResponseData.negocio && apiResponseData.negocio.color ? apiResponseData.negocio.color : '#CF152D';
 
         let bounds = [];
-
         let targetStopLatLon = null;
+
+        // Encontrar las coordenadas reales de la parada objetivo desde la lista de paraderos del recorrido
         if (activeStopCode) {
-            const foundStop = paraderos.find(p => p.cod === activeStopCode);
-            if (foundStop) {
-                targetStopLatLon = L.latLng(foundStop.pos[0], foundStop.pos[1]);
+            const foundStopInParaderos = paraderos.find(p => p.cod === activeStopCode);
+            if (foundStopInParaderos) {
+                targetStopLatLon = L.latLng(foundStopInParaderos.pos[0], foundStopInParaderos.pos[1]);
+                // Añadir un marcador especial para la parada objetivo
                 L.marker(targetStopLatLon, {
                     icon: L.divIcon({
                         className: 'target-stop-icon',
@@ -140,21 +177,35 @@ async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialB
                     })
                 }).addTo(routeMarkersGroup).bindPopup(`<strong>Paradero ${activeStopCode}</strong> (tu destino)`).openPopup();
                 bounds.push(targetStopLatLon);
+            } else {
+                console.warn(`Paradero ${activeStopCode} no encontrado en los datos de recorrido para la ruta ${routeId}.`);
             }
         }
 
 
+        // Dibujar la polilínea completa del recorrido
         if (pathCoordinates.length > 0) {
             const polyline = L.polyline(pathCoordinates, { color: routeColor, weight: 5, opacity: 0.7 }).addTo(map);
             routeMarkersGroup.addLayer(polyline);
             polyline.getLatLngs().forEach(latlng => bounds.push([latlng.lat, latlng.lng]));
 
-            const busInitialPos = L.latLng(pathCoordinates[0][0], pathCoordinates[0][1]);
+            // --- SIMULACIÓN DE POSICIÓN INICIAL DEL BUS ---
+            let busInitialPos = null;
+            // Calcular la posición del bus basada en la distancia a la parada, si los datos son válidos
+            if (targetStopLatLon && initialBusDistance !== 'N/A' && parseFloat(initialBusDistance) >= 0) {
+                busInitialPos = getLatLngAtDistanceAlongPolyline(pathCoordinates, targetStopLatLon, parseFloat(initialBusDistance));
+            }
+
+            // Si el cálculo de la posición falla o la distancia es inválida, colocar el bus al inicio de la ruta.
+            if (!busInitialPos) {
+                busInitialPos = L.latLng(pathCoordinates[0][0], pathCoordinates[0][1]);
+                console.warn("No se pudo calcular la posición inicial del bus basada en la distancia, colocándolo al inicio de la ruta.");
+            }
 
             currentBusMarker = L.marker(busInitialPos, {
                 icon: L.divIcon({
                     className: 'bus-emoji-icon',
-                    html: `<div style="font-size: 25px;">🚌</div>`,
+                    html: `<div style="font-size: 25px;">🚌</div>`, // Bus emoji
                     iconSize: [25, 25],
                     iconAnchor: [12, 12]
                 })
@@ -171,14 +222,17 @@ async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialB
             resultadosDiv.innerHTML = `<p class="error-msg">No se encontraron datos de recorrido para la ruta ${routeId}.</p>`;
         }
 
+        // Ajustar la vista del mapa para que quepan todos los elementos (ruta y paradas)
         if (bounds.length > 0) {
             map.fitBounds(bounds, { padding: [50, 50] });
         } else {
+            // Si no hay límites calculados (ej. ruta sin coordenadas), centrar en el bus si existe
             if (currentBusMarker) map.setView(currentBusMarker.getLatLng(), 15);
         }
 
         resultadosDiv.innerHTML = `<p class="info-msg">Mostrando ruta de <strong>${routeId}</strong>. Actualizaciones para bus <strong>${busPlate}</strong> cada 15 segundos.</p>`;
 
+        // Iniciar el intervalo de actualización en tiempo real
         if (currentSimulationInterval) clearInterval(currentSimulationInterval);
         currentSimulationInterval = setInterval(updateBusPosition, 15000);
 
@@ -191,7 +245,84 @@ async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialB
 }
 
 
-// --- EVENT LISTENERS ---
+// --- updateBusPosition (modificada para mover el bus) ---
+async function updateBusPosition() {
+    if (!activeStopCode || !activeRouteId || !activeBusPlate) {
+        console.warn("No hay un bus siendo rastreado activamente para actualizaciones.");
+        return;
+    }
+
+    console.log(`[DEBUG] Actualizando posición para bus ${activeBusPlate} en ruta ${activeRouteId} para parada ${activeStopCode}`);
+
+    try {
+        // 1. Re-obtener las próximas llegadas para la parada activa
+        const fullApiUrl = `${externalApiBaseUrl}/${activeStopCode}/next_arrivals`;
+        const response = await fetch(fullApiUrl);
+        if (!response.ok) {
+            throw new Error(`Error al re-obtener llegadas para ${activeStopCode}: ${response.status}`);
+        }
+        const apiResponseData = await response.json();
+        const services = apiResponseData.results;
+
+        let foundBus = null;
+        if (services && Array.isArray(services)) {
+            // Encontrar el bus que estamos siguiendo
+            foundBus = services.find(s => s.route_id === activeRouteId && s.bus_plate_number === activeBusPlate);
+        }
+
+        if (foundBus) {
+            const tiempoEstimado = foundBus.arrival_estimation;
+            const distanciaMetros = foundBus.bus_distance;
+
+            // 2. Re-obtener los datos del recorrido completo (polilínea y paraderos)
+            // Necesitamos la polilínea actualizada para calcular la nueva posición del bus
+            const recorridoResponse = await fetch(`${recorridoApiBaseUrl}?codsint=${activeRouteId}`);
+            if (!recorridoResponse.ok) throw new Error("No se pudo re-obtener la ruta para la actualización de la posición del bus.");
+            const recorridoData = await recorridoResponse.json();
+            const pathCoordinates = recorridoData.ida && recorridoData.ida.path ? recorridoData.ida.path : [];
+            const paraderos = recorridoData.ida && recorridoData.ida.paraderos ? recorridoData.ida.paraderos : [];
+
+            let newBusPos = null;
+            let targetStopLatLon = null;
+
+            // Encontrar la coordenada de la parada objetivo de nuevo
+            const foundStopInParaderos = paraderos.find(p => p.cod === activeStopCode);
+            if (foundStopInParaderos) {
+                targetStopLatLon = L.latLng(foundStopInParaderos.pos[0], foundStopInParaderos.pos[1]);
+            }
+
+            // 3. Si tenemos todos los datos, calcular la nueva posición del bus y mover el marcador
+            if (currentBusMarker && targetStopLatLon && pathCoordinates.length > 1 && distanciaMetros !== 'N/A' && parseFloat(distanciaMetros) >= 0) {
+                newBusPos = getLatLngAtDistanceAlongPolyline(pathCoordinates, targetStopLatLon, parseFloat(distanciaMetros));
+                if (newBusPos) {
+                    currentBusMarker.setLatLng(newBusPos); // Actualizar la posición del marcador en el mapa
+                }
+            }
+
+            // 4. Actualizar el contenido del popup del marcador del bus
+            if (currentBusMarker) {
+                currentBusMarker.setPopupContent(`
+                    <strong>Bus: ${activeBusPlate} (Ruta: ${activeRouteId})</strong><br>
+                    Llega en: <span style="font-weight: bold; color: #CF152D;">${tiempoEstimado}</span><br>
+                    Distancia: ${distanciaMetros} mts
+                `).openPopup();
+            }
+        } else {
+            console.warn(`Bus ${activeBusPlate} (Ruta ${activeRouteId}) ya no se encontró en la lista de próximas llegadas para ${activeStopCode}.`);
+            // Opcional: Podrías detener la simulación o remover el marcador si el bus desaparece
+            // clearInterval(currentSimulationInterval);
+            // if (currentBusMarker) {
+            //     map.removeLayer(currentBusMarker);
+            //     currentBusMarker = null;
+            // }
+        }
+
+    } catch (error) {
+        console.error("Error al actualizar la posición del bus:", error);
+    }
+}
+
+// --- EVENT LISTENERS (mantienen la misma lógica, solo llaman a las funciones actualizadas) ---
 
 buscarBtn.addEventListener('click', async () => {
     const codigoParada = codigoParadaInput.value.trim().toUpperCase();
@@ -235,7 +366,7 @@ buscarBtn.addEventListener('click', async () => {
                                     data-arrival-estimation="${tiempoEstimado}">
                                     <strong>Ruta: ${rutaId}</strong> (Patente: ${patente}):
                                     <span>${tiempoEstimado} <span class="distance">(aprox. ${distanciaMetros} mts)</span></span>
-                                </li>`;
+                                   </li>`;
             });
             htmlResultados += '</ul>';
 
@@ -269,7 +400,6 @@ resultadosDiv.addEventListener('click', (event) => {
     }
 });
 
-// Original buscarRecorridoBtn.addEventListener (ensure it calls limpiarUI to clear intervals)
 buscarRecorridoBtn.addEventListener('click', async () => {
     const codigoRecorrido = codigoRecorridoInput.value.trim().toUpperCase();
     if (!codigoRecorrido) {
