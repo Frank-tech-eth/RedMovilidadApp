@@ -1,0 +1,6 @@
+@RedMovilidad.Api_HostAddress = http://localhost:5017
+
+GET {{RedMovilidad.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
