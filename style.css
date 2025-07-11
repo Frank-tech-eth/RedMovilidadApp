@@ -2,24 +2,24 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Roboto', sans-serif; /* Fuente principal */
-    background-color: #f0f2f5; /* Color de fondo muy claro, casi blanco */
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5; /* Fondo muy claro */
     color: #333; /* Color de texto principal */
     line-height: 1.6;
-    -webkit-font-smoothing: antialiased; /* Suavizado de fuentes para mejor legibilidad */
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    display: flex; /* Para que el cuerpo sea un contenedor flex y centre el contenido */
+    display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Asegura que el cuerpo ocupe al menos el 100% de la altura de la ventana */
+    min-height: 100vh;
 }
 
-/* Header Styling - Inspirado en la barra superior de RED Movilidad */
+/* Header Styling - Ahora con fondo rojo */
 .app-header {
-    background-color: #004A8F; /* Azul primario de RED */
+    background-color: #CF152D; /* ROJO de RED */
     color: white;
     padding: 20px 0;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .header-content {
@@ -30,9 +30,9 @@ body {
 
 .app-title {
     font-size: 2.8em;
-    font-weight: 900; /* Extra bold para el branding de RED */
+    font-weight: 900;
     margin: 0;
-    letter-spacing: -1px; /* Espaciado de letras ajustado */
+    letter-spacing: -1px;
 }
 
 .app-subtitle {
@@ -44,91 +44,92 @@ body {
 
 /* Main Wrapper for Content */
 .main-wrapper {
-    flex-grow: 1; /* Permite que ocupe el espacio vertical disponible */
-    max-width: 1300px; /* Ancho máximo para el contenido central */
-    margin: 30px auto; /* Espaciado superior e inferior, centrado horizontal */
-    padding: 0 20px; /* Padding horizontal */
+    flex-grow: 1;
+    max-width: 1300px;
+    margin: 30px auto;
+    padding: 0 20px;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Espacio entre secciones (búsqueda, loader, contenido) */
+    gap: 25px;
 }
 
-/* Estilo general para las "tarjetas" (cards) */
+/* Card General Styling */
 .card {
     background-color: #ffffff;
-    border-radius: 10px; /* Bordes ligeramente redondeados */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Sombra más pronunciada para efecto de elevación */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     padding: 25px;
 }
 
-/* Wrapper para las secciones de búsqueda */
+/* Search Section Styling */
 .search-section-wrapper {
     display: flex;
-    flex-wrap: wrap; /* Permite que las tarjetas de búsqueda se envuelvan en pantallas pequeñas */
-    gap: 25px; /* Espacio entre las tarjetas de búsqueda */
-    justify-content: center; /* Centra las tarjetas */
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
 }
 
 .search-card {
-    flex: 1; /* Permite que las tarjetas crezcan */
-    min-width: 300px; /* Ancho mínimo para cada tarjeta de búsqueda */
-    max-width: 550px; /* Ancho máximo para cada tarjeta de búsqueda */
-    /* Hereda los estilos de .card */
+    flex: 1;
+    min-width: 300px;
+    max-width: 550px;
 }
 
+    /* Títulos de las tarjetas de búsqueda ahora en rojo */
     .search-card h2 {
-        color: #004A8F; /* Azul de RED */
+        color: #CF152D; /* ROJO de RED */
         font-size: 1.6em;
         font-weight: 700;
         margin-top: 0;
         margin-bottom: 20px;
-        border-bottom: 2px solid #e0e0e0; /* Línea separadora */
+        border-bottom: 2px solid #e0e0e0;
         padding-bottom: 10px;
     }
 
 .input-group {
     display: flex;
-    gap: 10px; /* Espacio entre input y botón */
+    gap: 10px;
     align-items: center;
-    flex-wrap: wrap; /* Permite que el botón baje si no hay espacio */
+    flex-wrap: wrap;
 }
 
 input[type="text"] {
     flex-grow: 1;
     padding: 12px 18px;
-    border: 1px solid #cdd4da; /* Borde gris suave */
-    border-radius: 8px; /* Bordes más redondeados */
+    border: 1px solid #cdd4da;
+    border-radius: 8px;
     font-size: 1em;
-    outline: none; /* Quita el contorno al enfocar */
+    outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
     input[type="text"]::placeholder {
-        color: #8c9ba7; /* Color del placeholder */
+        color: #8c9ba7;
     }
 
     input[type="text"]:focus {
-        border-color: #007bff; /* Azul de enfoque */
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Sombra de enfoque */
+        border-color: #CF152D; /* Borde rojo al enfocar */
+        box-shadow: 0 0 0 3px rgba(207, 21, 45, 0.2); /* Sombra roja al enfocar */
     }
 
+/* Botones principales ahora en rojo */
 .primary-btn {
     padding: 12px 25px;
-    background-color: #004A8F; /* Azul de RED */
+    background-color: #CF152D; /* ROJO de RED */
     color: white;
     border: none;
-    border-radius: 8px; /* Bordes más redondeados */
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 500;
     transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-    white-space: nowrap; /* Evita que el texto del botón se envuelva */
+    white-space: nowrap;
 }
 
     .primary-btn:hover {
-        background-color: #003a70; /* Azul más oscuro al pasar el ratón */
-        transform: translateY(-2px); /* Pequeño efecto de elevación */
-        box-shadow: 0 4px 10px rgba(0, 74, 143, 0.3);
+        background-color: #B21239; /* Tono de rojo más oscuro al pasar el ratón */
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(207, 21, 45, 0.3); /* Sombra roja más intensa */
     }
 
     .primary-btn:active {
@@ -136,24 +137,24 @@ input[type="text"] {
         box-shadow: none;
     }
 
-/* Contenedor para el panel de resultados y el mapa */
+/* Content Display (Results and Map) */
 .content-display {
     display: flex;
-    flex-direction: column; /* Por defecto en columna para pantallas pequeñas */
-    gap: 25px; /* Espacio entre el panel de resultados y el mapa */
-    flex-grow: 1; /* Permite que ocupe el espacio restante */
+    flex-direction: column;
+    gap: 25px;
+    flex-grow: 1;
 }
 
 .results-panel {
-    min-height: 150px; /* Altura mínima incluso si está vacío */
-    max-height: 400px; /* Altura máxima para permitir el scroll */
-    overflow-y: auto; /* Habilita el scroll vertical */
-    flex-shrink: 0; /* Evita que se encoja demasiado */
-    /* Hereda los estilos de .card */
+    min-height: 150px;
+    max-height: 400px;
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
+    /* Título del panel de resultados ahora en rojo */
     .results-panel h2 {
-        color: #004A8F;
+        color: #CF152D; /* ROJO de RED */
         margin-top: 0;
         margin-bottom: 15px;
         font-size: 1.5em;
@@ -174,26 +175,28 @@ input[type="text"] {
         margin: 0;
     }
 
+    /* Fondos de los ítems de lista ahora en un rojo muy claro */
     .results-panel li {
-        background-color: #e6eef5; /* Fondo azul claro para los ítems de lista */
+        background-color: #FFE6E6; /* ROJO muy claro, casi rosado pálido */
         padding: 12px 18px;
         margin-bottom: 10px;
         border-radius: 6px;
         font-size: 0.95em;
         display: flex;
-        flex-direction: column; /* Apila la información verticalmente en pantallas pequeñas */
+        flex-direction: column;
         gap: 5px;
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Sombra interna sutil */
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
 
+        /* El texto "Ruta" dentro de los resultados ahora es rojo */
         .results-panel li strong {
             font-size: 1.05em;
-            color: #004A8F; /* Color para la ruta/código de parada */
+            color: #CF152D; /* ROJO de RED */
         }
 
         .results-panel li span {
             font-weight: bold;
-            color: #CF152D; /* Rojo de RED para el tiempo estimado */
+            color: #6A0000; /* Un rojo oscuro para el tiempo estimado */
             font-size: 1em;
         }
 
@@ -201,48 +204,47 @@ input[type="text"] {
         font-size: 0.85em;
         color: #666;
         font-weight: normal;
-        margin-left: 0; /* Sin margen a la izquierda en pantallas pequeñas */
+        margin-left: 0;
     }
 
 /* Estilo del contenedor del mapa */
 .map-container {
-    height: 500px; /* Altura fija para el mapa */
-    /* Hereda los estilos de .card */
+    height: 500px;
 }
 
-/* Mensajes de error/información */
+/* Mensajes de error/información (se mantienen los colores actuales, que ya son consistentes) */
 .error-msg {
-    color: #D32F2F; /* Rojo más oscuro para errores */
+    color: #D32F2F;
     font-weight: 500;
     text-align: center;
     padding: 15px;
-    background-color: #FFEBEE; /* Fondo rojo claro */
+    background-color: #FFEBEE;
     border: 1px solid #EF9A9A;
     border-radius: 8px;
     margin-top: 15px;
 }
 
-.info-msg { /* Para mensajes iniciales o de éxito */
-    color: #2E7D32; /* Verde oscuro */
+.info-msg {
+    color: #2E7D32; /* Se mantiene verde, es un color neutro para información positiva */
     font-weight: 500;
     text-align: center;
     padding: 15px;
-    background-color: #E8F5E9; /* Fondo verde claro */
+    background-color: #E8F5E9;
     border: 1px solid #A5D6A7;
     border-radius: 8px;
     margin-top: 15px;
 }
 
-/* Estilos de la animación de carga (spinner rojo) */
+/* Estilos de la animación de carga (spinner rojo - ya estaba en rojo) */
 .loader {
-    border: 5px solid #f3f3f3; /* Gris claro */
-    border-top: 5px solid #CF152D; /* Rojo de la marca RED */
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #CF152D; /* ROJO de RED */
     border-radius: 50%;
-    width: 40px; /* Tamaño un poco más grande */
+    width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
-    margin: 30px auto; /* Centrado con más espacio */
-    display: none; /* Oculto por defecto */
+    margin: 30px auto;
+    display: none;
 }
 
 @keyframes spin {
@@ -255,7 +257,7 @@ input[type="text"] {
     }
 }
 
-/* Media Queries para Responsiveness */
+/* Media Queries for Responsiveness (sin cambios de color, solo layout) */
 @media (min-width: 768px) {
     .app-title {
         font-size: 3.5em;
@@ -266,33 +268,33 @@ input[type="text"] {
     }
 
     .input-group {
-        flex-direction: row; /* Input y botón lado a lado */
+        flex-direction: row;
     }
 
     .results-panel li {
-        flex-direction: row; /* Información lado a lado */
+        flex-direction: row;
         justify-content: space-between;
         align-items: center;
     }
 
     .results-panel .distance {
-        margin-left: 10px; /* Margen si el texto está lado a lado */
+        margin-left: 10px;
     }
 
     .content-display {
-        flex-direction: row; /* Panel de resultados y Mapa lado a lado */
-        align-items: flex-start; /* Alinea los elementos al inicio */
+        flex-direction: row;
+        align-items: flex-start;
     }
 
     .results-panel {
-        flex: 1; /* Ocupa una parte del espacio */
-        min-width: 300px; /* Asegura que no sea demasiado estrecho */
-        max-height: 500px; /* Altura máxima igual a la del mapa */
+        flex: 1;
+        min-width: 300px;
+        max-height: 500px;
     }
 
     .map-container {
-        flex: 2; /* Ocupa dos partes del espacio (más grande) */
-        min-width: 400px; /* Asegura que el mapa no sea demasiado estrecho */
+        flex: 2;
+        min-width: 400px;
     }
 }
 
@@ -329,6 +331,6 @@ input[type="text"] {
     }
 
     .map-container {
-        height: 350px; /* Mapa más pequeño en pantallas muy pequeñas */
+        height: 350px;
     }
 }

@@ -1,200 +1,340 @@
-// --- CONSTANTES Y ELEMENTOS DEL DOM ---
-const codigoParadaInput = document.getElementById('codigoParadaInput');
-const buscarBtn = document.getElementById('buscarBtn');
-const resultadosDiv = document.getElementById('resultados');
-const codigoRecorridoInput = document.getElementById('codigoRecorridoInput');
-const buscarRecorridoBtn = document.getElementById('buscarRecorridoBtn');
-const loader = document.getElementById('loader');
-
-// --- URLs de las APIs (Ambas corregidas y presentes) ---
-// API para buscar prÛximas llegadas en una parada (proxy para evitar CORS)
-const externalApiBaseUrl = 'https://red-api.chewy.workers.dev/stops';
-// API para conocer el recorrido completo de una ruta y sus paraderos
-const recorridoApiBaseUrl = 'https://red.cl/restservice_v2/rest/conocerecorrido';
-
-
-// --- CONFIGURACI”N DEL MAPA LEAFLET ---
-let map = L.map('map').setView([-33.4489, -70.6693], 12); // Centro inicial en Santiago
+Ôªø// --- CONSTANTES Y ELEMENTOS DEL DOM ---
+const map = L.map('mapid').setView([-33.45694, -70.64827], 13); // Centrado en Santiago
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-let paradaMarker = null; // Para el marcador de parada individual
-// Grupo para manejar f·cilmente los marcadores y polilÌneas del recorrido
-let routeMarkersGroup = L.featureGroup().addTo(map);
+const codigoParadaInput = document.getElementById('codigoParada');
+const buscarBtn = document.getElementById('buscarBtn');
+const codigoRecorridoInput = document.getElementById('codigoRecorrido');
+const buscarRecorridoBtn = document.getElementById('buscarRecorridoBtn');
+const resultadosDiv = document.getElementById('resultados');
+const loader = document.getElementById('loader');
+
+// Capas para agrupar marcadores y polil√≠neas y poder limpiarlas f√°cilmente
+const routeMarkersGroup = L.featureGroup().addTo(map);
+let paradaMarker = null; // Para el marcador de la parada buscada (si existe)
+
+// URLs de las APIs
+// API 1: Para buscar pr√≥ximas llegadas a una parada
+const externalApiBaseUrl = 'https://red-api.chewy.workers.dev/stops';
+// API 2: Para conocer el recorrido completo de una ruta
+const recorridoApiBaseUrl = 'https://red.cl/restservice_v2/rest/conocerecorrido';
+
+// --- GLOBAL VARIABLES FOR REAL-TIME SIMULATION ---
+let currentBusMarker = null; // To hold the bus emoji marker
+let currentSimulationInterval = null; // To manage the interval for updates
+let activeStopCode = null; // Store the stop code being tracked
+let activeRouteId = null; // Store the route ID being tracked
+let activeBusPlate = null; // Store the bus plate being tracked (for finding it in updates)
 
 
 // --- FUNCIONES DE UTILIDAD ---
 
-// FunciÛn para limpiar la interfaz de usuario (resultados, marcadores, loader)
 function limpiarUI() {
-    // Limpia el marcador de parada individual si existe
+    // Limpiar marcadores y polil√≠neas anteriores
     if (paradaMarker) {
         map.removeLayer(paradaMarker);
         paradaMarker = null;
     }
-    // Limpia todos los marcadores y polilÌneas del grupo de recorrido
     routeMarkersGroup.clearLayers();
-    resultadosDiv.innerHTML = ''; // Limpia el panel de resultados
-    loader.style.display = 'none'; // Oculta el loader
+
+    // Clear the bus simulation interval
+    if (currentSimulationInterval) {
+        clearInterval(currentSimulationInterval);
+        currentSimulationInterval = null;
+    }
+    currentBusMarker = null;
+    activeStopCode = null;
+    activeRouteId = null;
+    activeBusPlate = null;
+
+    resultadosDiv.innerHTML = '';
+    loader.style.display = 'none';
 }
 
-// --- EVENT LISTENERS (L”GICA DE B⁄SQUEDA) ---
 
-// Event listener para el botÛn de buscar paradas individuales
-buscarBtn.addEventListener('click', async () => {
-    const codigoParada = codigoParadaInput.value.trim().toUpperCase();
-    console.log(`[DEBUG] CÛdigo de parada ingresado: "${codigoParada}"`);
-
-    if (!codigoParada) {
-        resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un cÛdigo de parada (ej. PF1126).</p>';
-        limpiarUI(); // Limpia la UI y oculta el loader
+// --- New function to update the bus marker's position and info ---
+async function updateBusPosition() {
+    if (!activeStopCode || !activeRouteId || !activeBusPlate) {
+        console.warn("No bus is actively being tracked for updates.");
         return;
     }
 
-    resultadosDiv.innerHTML = '<p>Cargando informaciÛn del paradero...</p>';
-    loader.style.display = 'block'; // Muestra el loader de carga
+    console.log(`[DEBUG] Actualizando posici√≥n para bus ${activeBusPlate} en ruta ${activeRouteId} para parada ${activeStopCode}`);
 
     try {
-        // Construye la URL para la API de paradas individuales
-        const fullApiUrl = `${externalApiBaseUrl}/${codigoParada}/next_arrivals`;
-        console.log(`[DEBUG] Llamando a la URL de la API de paradas: "${fullApiUrl}"`);
-
+        const fullApiUrl = `${externalApiBaseUrl}/${activeStopCode}/next_arrivals`;
         const response = await fetch(fullApiUrl);
+        if (!response.ok) {
+            throw new Error(`Error al re-fetch de llegadas para ${activeStopCode}: ${response.status}`);
+        }
+        const apiResponseData = await response.json();
+        const services = apiResponseData.results;
 
-        console.log(`[DEBUG] Respuesta de la API de paradas - Status: ${response.status} (${response.statusText})`);
+        let foundBus = null;
+        if (services && Array.isArray(services)) {
+            foundBus = services.find(s => s.route_id === activeRouteId && s.bus_plate_number === activeBusPlate);
+        }
+
+        if (foundBus) {
+            const tiempoEstimado = foundBus.arrival_estimation;
+            const distanciaMetros = foundBus.bus_distance;
+
+            if (currentBusMarker) {
+                currentBusMarker.setPopupContent(`
+                    <strong>Bus: ${activeBusPlate} (Ruta: ${activeRouteId})</strong><br>
+                    Llega en: <span style="font-weight: bold; color: #CF152D;">${tiempoEstimado}</span><br>
+                    Distancia: ${distanciaMetros} mts
+                `).openPopup();
+            }
+        } else {
+            console.warn(`Bus ${activeBusPlate} (Ruta ${activeRouteId}) ya no se encontr√≥ en la lista de pr√≥ximas llegadas para ${activeStopCode}.`);
+        }
+
+    } catch (error) {
+        console.error("Error al actualizar la posici√≥n del bus:", error);
+    }
+}
+
+
+// Function to display a specific bus's route and initial "position"
+async function showLiveBusAndRoute(originalStopCode, routeId, busPlate, initialBusDistance, initialArrivalEstimation) {
+    limpiarUI();
+
+    activeStopCode = originalStopCode;
+    activeRouteId = routeId;
+    activeBusPlate = busPlate;
+
+    loader.style.display = 'block';
+    resultadosDiv.innerHTML = `<p>Cargando recorrido y simulando bus ${busPlate} en ruta ${routeId}...</p>`;
+
+    try {
+        const fullApiUrl = `${recorridoApiBaseUrl}?codsint=${routeId}`;
+        const response = await fetch(fullApiUrl);
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error(`[DEBUG] Error detallado de la API de paradas: ${errorData}`);
-            throw new Error(`Error de la API externa para paradas: ${response.status} - ${errorData}`);
+            throw new Error(`Error de la API al obtener recorrido: ${response.status} - ${errorData}`);
         }
 
         const apiResponseData = await response.json();
-        console.log("[DEBUG] Datos de la API de paradas recibidos:", apiResponseData);
+        const paraderos = apiResponseData.ida && apiResponseData.ida.paraderos ? apiResponseData.ida.paraderos : [];
+        const pathCoordinates = apiResponseData.ida && apiResponseData.ida.path ? apiResponseData.ida.path : [];
+        const routeColor = apiResponseData.negocio && apiResponseData.negocio.color ? apiResponseData.negocio.color : '#CF152D';
 
-        const services = apiResponseData.results;
+        let bounds = [];
 
-        if (!services || !Array.isArray(services)) {
-            resultadosDiv.innerHTML = '<p class="error-msg">Formato de datos inesperado de la API. No se pudo obtener la informaciÛn de servicios.</p>';
-            return;
+        let targetStopLatLon = null;
+        if (activeStopCode) {
+            const foundStop = paraderos.find(p => p.cod === activeStopCode);
+            if (foundStop) {
+                targetStopLatLon = L.latLng(foundStop.pos[0], foundStop.pos[1]);
+                L.marker(targetStopLatLon, {
+                    icon: L.divIcon({
+                        className: 'target-stop-icon',
+                        html: `<div style="background-color: ${routeColor}; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white;">&#10003;</div>`,
+                        iconSize: [25, 25],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(routeMarkersGroup).bindPopup(`<strong>Paradero ${activeStopCode}</strong> (tu destino)`).openPopup();
+                bounds.push(targetStopLatLon);
+            }
         }
+
+
+        if (pathCoordinates.length > 0) {
+            const polyline = L.polyline(pathCoordinates, { color: routeColor, weight: 5, opacity: 0.7 }).addTo(map);
+            routeMarkersGroup.addLayer(polyline);
+            polyline.getLatLngs().forEach(latlng => bounds.push([latlng.lat, latlng.lng]));
+
+            const busInitialPos = L.latLng(pathCoordinates[0][0], pathCoordinates[0][1]);
+
+            currentBusMarker = L.marker(busInitialPos, {
+                icon: L.divIcon({
+                    className: 'bus-emoji-icon',
+                    html: `<div style="font-size: 25px;">üöå</div>`,
+                    iconSize: [25, 25],
+                    iconAnchor: [12, 12]
+                })
+            }).addTo(routeMarkersGroup);
+
+            currentBusMarker.bindPopup(`
+                <strong>Bus: ${busPlate} (Ruta: ${routeId})</strong><br>
+                Llega en: <span style="font-weight: bold; color: #CF152D;">${initialArrivalEstimation}</span><br>
+                Distancia: ${initialBusDistance} mts
+            `).openPopup();
+
+
+        } else {
+            resultadosDiv.innerHTML = `<p class="error-msg">No se encontraron datos de recorrido para la ruta ${routeId}.</p>`;
+        }
+
+        if (bounds.length > 0) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } else {
+            if (currentBusMarker) map.setView(currentBusMarker.getLatLng(), 15);
+        }
+
+        resultadosDiv.innerHTML = `<p class="info-msg">Mostrando ruta de <strong>${routeId}</strong>. Actualizaciones para bus <strong>${busPlate}</strong> cada 15 segundos.</p>`;
+
+        if (currentSimulationInterval) clearInterval(currentSimulationInterval);
+        currentSimulationInterval = setInterval(updateBusPosition, 15000);
+
+    } catch (error) {
+        console.error('Error al mostrar recorrido y simular bus:', error);
+        resultadosDiv.innerHTML = `<p class="error-msg">Ocurri√≥ un error al cargar el recorrido o simular el bus: ${error.message}.</p>`;
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+
+// --- EVENT LISTENERS ---
+
+buscarBtn.addEventListener('click', async () => {
+    const codigoParada = codigoParadaInput.value.trim().toUpperCase();
+    if (!codigoParada) {
+        resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un c√≥digo de parada (ej. PF1126).</p>';
+        limpiarUI();
+        return;
+    }
+
+    limpiarUI();
+    resultadosDiv.innerHTML = '<p>Cargando informaci√≥n del paradero...</p>';
+    loader.style.display = 'block';
+
+    try {
+        const fullApiUrl = `${externalApiBaseUrl}/${codigoParada}/next_arrivals`;
+        const response = await fetch(fullApiUrl);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error de la API externa para paradas: ${response.status} - ${errorText}`);
+        }
+
+        const apiResponseData = await response.json();
+        const services = apiResponseData.results;
 
         let htmlResultados = `<h2>Resultados para el Paradero: ${codigoParada}</h2>`;
 
-        if (services.length > 0) {
-            htmlResultados += '<h3>PrÛximas llegadas:</h3><ul>';
+        if (services && Array.isArray(services) && services.length > 0) {
+            htmlResultados += '<h3>Pr√≥ximas llegadas (Haz clic para ver recorrido y bus):</h3><ul>';
             services.forEach(servicio => {
-                const tiempoEstimado = servicio.arrival_estimation;
-                const distanciaMetros = servicio.bus_distance;
-                const rutaId = servicio.route_id;
+                const tiempoEstimado = servicio.arrival_estimation || 'N/A';
+                const distanciaMetros = servicio.bus_distance !== undefined ? servicio.bus_distance : 'N/A';
+                const rutaId = servicio.route_id || 'undefined';
                 const patente = servicio.bus_plate_number || 'N/A';
 
-                htmlResultados += `<li>
-                                    <strong>Ruta: ${rutaId}</strong> (Patente: ${patente}): 
+                htmlResultados += `<li class="clickable-bus-route"
+                                    data-stop-code="${codigoParada}"
+                                    data-route-id="${rutaId}"
+                                    data-bus-plate="${patente}"
+                                    data-bus-distance="${distanciaMetros}"
+                                    data-arrival-estimation="${tiempoEstimado}">
+                                    <strong>Ruta: ${rutaId}</strong> (Patente: ${patente}):
                                     <span>${tiempoEstimado} <span class="distance">(aprox. ${distanciaMetros} mts)</span></span>
-                                   </li>`;
+                                </li>`;
             });
             htmlResultados += '</ul>';
+
         } else {
             htmlResultados += '<p class="info-msg">No hay buses cercanos para este paradero en este momento.</p>';
         }
         resultadosDiv.innerHTML = htmlResultados;
 
-        console.warn("[DEBUG] La API de llegadas no proporciona coordenadas de latitud/longitud del paradero. El mapa no se centrar· autom·ticamente en la parada.");
-
     } catch (error) {
         console.error('Error al buscar paradero:', error);
-        resultadosDiv.innerHTML = `<p class="error-msg">OcurriÛ un error al buscar el paradero: ${error.message}. Verifica la consola del navegador para m·s detalles.</p>`;
+        resultadosDiv.innerHTML = `<p class="error-msg">Ocurri√≥ un error al buscar el paradero: ${error.message}. Verifica la consola del navegador para m√°s detalles.</p>`;
     } finally {
-        loader.style.display = 'none'; // Oculta el loader al finalizar (Èxito o error)
+        loader.style.display = 'none';
     }
 });
 
-// Event listener para el botÛn de buscar recorridos
+
+// Event delegation for clicking on bus routes in the results panel
+resultadosDiv.addEventListener('click', (event) => {
+    const clickedListItem = event.target.closest('.clickable-bus-route');
+    if (clickedListItem) {
+        const stopCode = clickedListItem.dataset.stopCode;
+        const routeId = clickedListItem.dataset.routeId;
+        const busPlate = clickedListItem.dataset.busPlate;
+        const busDistance = clickedListItem.dataset.busDistance;
+        const arrivalEstimation = clickedListItem.dataset.arrivalEstimation;
+
+        if (stopCode && routeId && busPlate) {
+            showLiveBusAndRoute(stopCode, routeId, busPlate, busDistance, arrivalEstimation);
+        }
+    }
+});
+
+// Original buscarRecorridoBtn.addEventListener (ensure it calls limpiarUI to clear intervals)
 buscarRecorridoBtn.addEventListener('click', async () => {
     const codigoRecorrido = codigoRecorridoInput.value.trim().toUpperCase();
-    console.log(`[DEBUG] CÛdigo de recorrido ingresado: "${codigoRecorrido}"`);
-
     if (!codigoRecorrido) {
-        resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un cÛdigo de recorrido (ej. F03).</p>';
-        limpiarUI(); // Limpia la UI y oculta el loader
+        resultadosDiv.innerHTML = '<p class="error-msg">Por favor, ingresa un c√≥digo de recorrido (ej. F03).</p>';
+        limpiarUI();
         return;
     }
 
-    resultadosDiv.innerHTML = '<p>Cargando informaciÛn del recorrido y paraderos...</p>';
-    loader.style.display = 'block'; // Muestra el loader de carga
+    limpiarUI();
+    resultadosDiv.innerHTML = '<p>Cargando informaci√≥n del recorrido y paraderos...</p>';
+    loader.style.display = 'block';
 
     try {
-        // Construye la URL para la API de recorridos
         const fullApiUrl = `${recorridoApiBaseUrl}?codsint=${codigoRecorrido}`;
-        console.log(`[DEBUG] Llamando a la API de recorrido: "${fullApiUrl}"`);
-
-        // NOTA: Si experimentas problemas de CORS, es posible que necesites un proxy.
-        // Por ejemplo: `const response = await fetch('https://cors-anywhere.herokuapp.com/' + fullApiUrl);`
         const response = await fetch(fullApiUrl);
-
-        console.log(`[DEBUG] Respuesta de la API de recorrido - Status: ${response.status} (${response.statusText})`);
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error(`[DEBUG] Error detallado de la API de recorrido: ${errorData}`);
             throw new Error(`Error de la API externa para recorrido: ${response.status} - ${errorData}`);
         }
 
         const apiResponseData = await response.json();
-        console.log("[DEBUG] Datos de la API de recorrido recibidos:", apiResponseData);
+        const paraderos = apiResponseData.ida && apiResponseData.ida.paraderos ? apiResponseData.ida.paraderos : [];
+        const pathCoordinates = apiResponseData.ida && apiResponseData.ida.path ? apiResponseData.ida.path : [];
+        const routeColor = apiResponseData.negocio && apiResponseData.negocio.color ? apiResponseData.negocio.color : '#CF152D';
 
-        // Accedemos a los paraderos y al path desde la secciÛn 'ida' (ida del recorrido)
-        const paraderos = apiResponseData.ida.paraderos;
-        const pathCoordinates = apiResponseData.ida.path;
-        const routeColor = apiResponseData.negocio.color || '#004A8F'; // Color del negocio o azul por defecto
-
-        if (!paraderos || !Array.isArray(paraderos) || paraderos.length === 0) {
-            resultadosDiv.innerHTML = '<p class="error-msg">No se encontraron paraderos para este recorrido o el formato de datos es inesperado.</p>';
+        if (paraderos.length === 0 && pathCoordinates.length === 0) {
+            resultadosDiv.innerHTML = '<p class="error-msg">No se encontraron paraderos ni datos de recorrido para esta ruta.</p>';
             return;
         }
 
-        let htmlResultados = `<h2>Paraderos para el Recorrido: ${codigoRecorrido}</h2><h3>${apiResponseData.negocio.nombre}</h3><ul>`;
-        let bounds = []; // Para ajustar el zoom del mapa a todos los marcadores
+        let htmlResultados = `<h2>Paraderos para el Recorrido: ${codigoRecorrido}</h2><h3>${apiResponseData.negocio.nombre || 'Nombre no disponible'}</h3><ul>`;
+        let bounds = [];
 
-        // Dibuja los paraderos en el mapa
         paraderos.forEach(paradero => {
             const lat = paradero.pos[0];
             const lng = paradero.pos[1];
-            const paradaNombre = paradero.name;
-            const paradaCodigo = paradero.cod;
+            const paradaNombre = paradero.name || 'Nombre no disponible';
+            const paradaCodigo = paradero.cod || 'N/A';
 
-            // Crea un marcador y lo aÒade al grupo de marcadores del recorrido
             const marker = L.marker([lat, lng]).bindPopup(`<strong>${paradaCodigo}</strong><br>${paradaNombre}`);
             routeMarkersGroup.addLayer(marker);
-
-            bounds.push([lat, lng]); // AÒade las coordenadas para calcular los lÌmites del mapa
+            bounds.push([lat, lng]);
             htmlResultados += `<li><strong>${paradaCodigo}</strong>: ${paradaNombre}</li>`;
         });
         htmlResultados += '</ul>';
         resultadosDiv.innerHTML = htmlResultados;
 
-        // Dibuja el trazo del recorrido (polyline)
-        if (pathCoordinates && Array.isArray(pathCoordinates) && pathCoordinates.length > 0) {
-            // El formato de path es [lat, lng], que es lo que L.polyline espera.
+        if (pathCoordinates.length > 0) {
             const polyline = L.polyline(pathCoordinates, { color: routeColor, weight: 5, opacity: 0.7 }).addTo(map);
-            routeMarkersGroup.addLayer(polyline); // AÒade la polilÌnea al mismo grupo para limpieza f·cil
-
-            // Extiende los lÌmites para incluir tambiÈn la polilÌnea (si no est· ya cubierta por los paraderos)
+            routeMarkersGroup.addLayer(polyline);
             polyline.getLatLngs().forEach(latlng => bounds.push([latlng.lat, latlng.lng]));
         }
 
-        // Ajusta el mapa para que se vean todos los marcadores y el recorrido
         if (bounds.length > 0) {
-            map.fitBounds(bounds, { padding: [50, 50] }); // AÒade un padding para que no quede justo al borde
+            map.fitBounds(bounds, { padding: [50, 50] });
         }
 
     } catch (error) {
         console.error('Error al buscar recorrido:', error);
-        resultadosDiv.innerHTML = `<p class="error-msg">OcurriÛ un error al buscar el recorrido: ${error.message}. Verifica la consola del navegador para m·s detalles.</p>`;
+        resultadosDiv.innerHTML = `<p class="error-msg">Ocurri√≥ un error al buscar el recorrido: ${error.message}. Verifica la consola del navegador para m√°s detalles.</p>`;
     } finally {
-        loader.style.display = 'none'; // Oculta el loader al finalizar (Èxito o error)
+        loader.style.display = 'none';
     }
 });
+
+// Initialize with a clean UI message
+resultadosDiv.innerHTML = '<p class="info-msg">Ingresa un c√≥digo de parada o de recorrido para ver la informaci√≥n.</p>';

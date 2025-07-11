@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RED Movilidad - Monitoreo de Recorridos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <title>Transporte Público RED</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="app-header">
@@ -16,34 +16,35 @@
         </div>
     </header>
 
-    <div class="main-wrapper">
-        <div class="search-section-wrapper">
-            <div class="search-card card">
+    <main class="main-wrapper">
+        <section class="search-section-wrapper">
+            <div class="card search-card">
                 <h2>Buscar Parada</h2>
                 <div class="input-group">
-                    <input type="text" id="codigoParadaInput" placeholder="Ej: PF1126, PA1">
-                    <button id="buscarBtn" class="primary-btn">Buscar</button>
+                    <input type="text" id="codigoParada" placeholder="Ej: PF1126">
+                    <button id="buscarBtn" class="primary-btn">Buscar Parada</button>
                 </div>
             </div>
 
-            <div class="search-card card">
-                <h2>Ver Recorrido</h2>
+            <div class="card search-card">
+                <h2>Buscar Recorrido</h2>
                 <div class="input-group">
-                    <input type="text" id="codigoRecorridoInput" placeholder="Ej: F03, 210">
-                    <button id="buscarRecorridoBtn" class="primary-btn">Ver Recorrido</button>
+                    <input type="text" id="codigoRecorrido" placeholder="Ej: F03">
+                    <button id="buscarRecorridoBtn" class="primary-btn">Buscar Recorrido</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="loader" class="loader"></div>
-
-        <div class="content-display">
-            <div id="resultados" class="results-panel card">
-                <p class="info-msg">Ingresa un código de parada o de recorrido para ver la información.</p>
+        <section class="content-display">
+            <div class="card results-panel" id="resultados">
             </div>
-            <div id="map" class="map-container card"></div>
-        </div>
-    </div>
+            <div id="loader" class="loader"></div>
+
+            <div class="card map-container">
+                <div id="mapid" style="height: 100%; width: 100%;"></div>
+            </div>
+        </section>
+    </main>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="script.js"></script>
